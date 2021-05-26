@@ -46,10 +46,7 @@ class SequentialDataset(Dataset):
             else:
                 train_data[user] = items
 
-        for user, items in train_data.items():
-            items = items[-self.max_len - 1:]
-            n_pad = self.max_len + 1 - len(items)
-            train_data[user] = np.pad(items, (n_pad, 0))
+        self.add_pad_and_cut(train_data)
 
         self.train_data = train_data
         self.valid_data = valid_data
@@ -59,8 +56,16 @@ class SequentialDataset(Dataset):
         neg_samples = list(self.all_items - set(self.train_data[user]))
         return np.random.choice(neg_samples, (self.max_len, self.n_neg_samples))
 
+<<<<<<< HEAD
     def check(self):
         pass
+=======
+    def add_pad_and_cut(self, train_data):
+        for user, items in train_data.items():
+            items = items[-self.max_len - 1:]
+            n_pad = self.max_len + 1 - len(items)
+            train_data[user] = np.pad(items, (n_pad, 0))
+>>>>>>> 29f00e410fb3e1c716eeee735b891b8f1641fe97
 
     def __len__(self):
         return len(self.train_data)
@@ -71,3 +76,23 @@ class SequentialDataset(Dataset):
         pad_mask = source == 0
         neg_samples = self.make_neg_samples(user)
         return source, target, pad_mask, neg_samples
+
+
+class CaserDataset(SequentialDataset):
+    def __init__(self, path, max_len, n_neg_samples):
+        super().__init__(path, max_len, n_neg_samples)
+
+    def add_pad_and_cut(self, train_data):
+        for user, items in train_data.items():
+            items = items[-self.max_len - 1:]
+            train_data[user] = items
+
+    def __getitem__(self, user):
+        sentence = self.train_data[user]
+        source = []
+        target = []
+        for idx, i in enumerate(sentence[1:]):
+            source.append(sentence[:idx+1])
+            target.append(i)
+        neg_samples = self.make_neg_samples(user)
+        return source, target, neg_samples

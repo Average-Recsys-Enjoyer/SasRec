@@ -1,4 +1,10 @@
-model:
+model_sas:
+  embed_size: 50
+  shared_embed: true
+  dropout: 0.1
+  num_blocks: 2
+
+model_caser:
   embed_size: 50
   shared_embed: true
   dropout: 0.1
