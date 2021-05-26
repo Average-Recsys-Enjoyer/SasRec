@@ -6,5 +6,8 @@ model:
 
 dataset:
   path: '/home/andreybocharnikov/programing/Recommendation-systems/SasRec/data/Beauty.txt'
-  max_len: 200
+  max_len: 50
   n_neg_samples: 1
+  batch_size: 4
+
+n_epochs: 200

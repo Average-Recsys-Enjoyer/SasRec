@@ -16,13 +16,17 @@ class SasRec(nn.Module):
                                                         dropout=dropout)
         self.encoder = nn.TransformerEncoder(encoder_layer=self.encoder_layer, num_layers=b)
 
-    def forward(self, s, padding_mask):
+    def forward(self, sequence, positive, negative, padding_mask):
         # s - input sequence of length n, each s_i \in [0, n_items)
-        e = self.item_embed(s) + self.pos_embed # shape - batch_size, max_len, embed_size
+        e = self.item_embed(sequence) + self.pos_embed # shape - batch_size, max_len, embed_size
         e = e.permute(1, 0, 2)
-        attn_output = self.encoder_layer(e, self.subsequent_mask, padding_mask) # max_len, batch_size, embed_size
-        # TODO change matmul to * with pos and neg
-        return torch.matmul(attn_output, self.item_embed_prediction.weight.T).permute(1, 2, 0) # batch_size, n_item, max_len
+        #print(e.shape)
+        #print(padding_mask.shape)
+        logits = self.encoder_layer(e, self.subsequent_mask, padding_mask) # max_len, batch_size, embed_size
+        pos_embed = self.item_embed(positive)
+        neg_embed = self.item_embed(negative)
+        return logits.permute(1, 0, 2), pos_embed, neg_embed
+        #return pos_embed * logits torch.matmul(attn_output, self.item_embed_prediction.weight.T).permute(1, 2, 0) # batch_size, n_item, max_len
 
 
 """

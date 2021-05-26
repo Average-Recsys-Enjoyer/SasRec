@@ -2,7 +2,7 @@ from collections import defaultdict
 import yaml
 
 import numpy as np
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 
 
 class SequentialDataset(Dataset):
@@ -12,7 +12,7 @@ class SequentialDataset(Dataset):
         user_actions = self.read_data(path)
         self.preprocess_data(user_actions)
         #self.make_neg_samples()
-        self.all_items = set(range(self.n_items + 1))
+        self.all_items = set(range(self.n_items))
 
     def read_data(self, path):
         user_actions = defaultdict(list)
@@ -23,7 +23,7 @@ class SequentialDataset(Dataset):
                 user_actions[user].append(item)
                 n_items = max(n_items, item)
 
-        self.n_items = n_items
+        self.n_items = n_items + 1
         return user_actions
 
     def preprocess_data(self, user_actions):
@@ -47,8 +47,8 @@ class SequentialDataset(Dataset):
                 train_data[user] = items
 
         for user, items in train_data.items():
-            items = items[-self.max_len:]
-            n_pad = self.max_len - len(items)
+            items = items[-self.max_len - 1:]
+            n_pad = self.max_len + 1 - len(items)
             train_data[user] = np.pad(items, (n_pad, 0))
 
         self.train_data = train_data
@@ -57,7 +57,7 @@ class SequentialDataset(Dataset):
 
     def make_neg_samples(self, user):
         neg_samples = list(self.all_items - set(self.train_data[user]))
-        return np.random.choice(neg_samples, (self.max_len - 1, self.n_neg_samples))
+        return np.random.choice(neg_samples, (self.max_len, self.n_neg_samples))
 
     def __len__(self):
         return len(self.train_data)
