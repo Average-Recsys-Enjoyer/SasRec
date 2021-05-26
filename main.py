@@ -1,4 +1,8 @@
+import yaml
+
 import torch
+
+from data import SequentialDataset
 from model import SasRec
 
 
@@ -16,4 +20,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    #main()
+    with open('./default_config.yaml') as config:
+        params = yaml.load(config, Loader=yaml.FullLoader)
+    dataset_params = params['dataset']
+    dataset = SequentialDataset(dataset_params['path'], dataset_params['max_len'], dataset_params['n_neg_samples'])
+    for example in dataset:
+        source, target, pad_mask, neg_samples = example
+        print(source.shape, target.shape, pad_mask.shape, neg_samples.shape)
