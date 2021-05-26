@@ -67,9 +67,10 @@ class SequentialDataset(Dataset):
     def __getitem__(self, user):
         sentence = self.train_data[user]
         source, target = sentence[:-1], sentence[1:]
-        pad_mask = source == 0
+        source_pad_mask = source == 0
+        target_pad_mask = target == 0
         neg_samples = self.make_neg_samples(user)
-        return source, target, pad_mask, neg_samples, user
+        return source, target, source_pad_mask, target_pad_mask, neg_samples, user
     
     def get_val(self):
       return self.valid_data
