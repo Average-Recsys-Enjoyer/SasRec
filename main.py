@@ -27,4 +27,4 @@ if __name__ == "__main__":
     dataset = SequentialDataset(dataset_params['path'], dataset_params['max_len'], dataset_params['n_neg_samples'])
     for example in dataset:
         source, target, pad_mask, neg_samples = example
-        print(source.shape, target.shape, pad_mask.shape, neg_samples.shape)
+        break

@@ -11,7 +11,8 @@ class SequentialDataset(Dataset):
         self.n_neg_samples = n_neg_samples
         user_actions = self.read_data(path)
         self.preprocess_data(user_actions)
-        self.make_neg_samples()
+        #self.make_neg_samples()
+        self.all_items = set(range(self.n_items + 1))
 
     def read_data(self, path):
         user_actions = defaultdict(list)
@@ -54,12 +55,9 @@ class SequentialDataset(Dataset):
         self.valid_data = valid_data
         self.test_data = test_data
 
-    def make_neg_samples(self):
-        neg_samples = {}
-        all_items = set(range(self.n_items + 1))
-        for user, items in self.train_data.items():
-            neg_samples[user] = list(all_items - set(items))
-        self.neg_samples = neg_samples
+    def make_neg_samples(self, user):
+        neg_samples = list(self.all_items - set(self.train_data[user]))
+        return np.random.choice(neg_samples, (self.max_len - 1, self.n_neg_samples))
 
     def __len__(self):
         return len(self.train_data)
@@ -68,5 +66,5 @@ class SequentialDataset(Dataset):
         sentence = self.train_data[user]
         source, target = sentence[:-1], sentence[1:]
         pad_mask = source == 0
-        neg_samples = np.random.choice(self.neg_samples[user], (self.max_len, self.n_neg_samples))
+        neg_samples = self.make_neg_samples(user)
         return source, target, pad_mask, neg_samples
