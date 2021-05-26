@@ -27,7 +27,7 @@ if __name__ == "__main__":
     with open('./default_config.yaml') as config:
         params = yaml.load(config, Loader=yaml.FullLoader)
     dataset_params = params['dataset']
-    model_params = params['model']
+    model_params = params['model_sas']
     dataset = SequentialDataset(dataset_params['path'], dataset_params['max_len'], dataset_params['n_neg_samples'])
     dataloader = DataLoader(dataset, batch_size=dataset_params['batch_size'], num_workers=2, shuffle=True)
     model = SasRec(dataset.n_items, dataset_params['max_len'], embed_size=model_params['embed_size'],
