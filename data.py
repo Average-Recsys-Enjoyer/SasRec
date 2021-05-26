@@ -11,7 +11,6 @@ class SequentialDataset(Dataset):
         self.n_neg_samples = n_neg_samples
         user_actions = self.read_data(path)
         self.preprocess_data(user_actions)
-        #self.make_neg_samples()
         self.all_items = set(range(self.n_items))
 
     def read_data(self, path):
@@ -56,16 +55,11 @@ class SequentialDataset(Dataset):
         neg_samples = list(self.all_items - set(self.train_data[user]))
         return np.random.choice(neg_samples, (self.max_len, self.n_neg_samples))
 
-<<<<<<< HEAD
-    def check(self):
-        pass
-=======
     def add_pad_and_cut(self, train_data):
         for user, items in train_data.items():
             items = items[-self.max_len - 1:]
             n_pad = self.max_len + 1 - len(items)
             train_data[user] = np.pad(items, (n_pad, 0))
->>>>>>> 29f00e410fb3e1c716eeee735b891b8f1641fe97
 
     def __len__(self):
         return len(self.train_data)
