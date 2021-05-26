@@ -1,0 +1,10 @@
+model:
+  embed_size: 50
+  shared_embed: true
+  dropout: 0.1
+  num_blocks: 2
+
+dataset:
+  path: '/home/andreybocharnikov/programing/Recommendation-systems/SasRec/data/Beauty.txt'
+  max_len: 200
+  n_neg_samples: 1
