@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 
 class SasRec(nn.Module):
-    def __init__(self, n_items, max_len, embed_size=50, shared_embed=True, dropout=0.1, b=2):
+    def __init__(self, n_items, max_len, embed_size=50, shared_embed=True, dropout=0.1, b=2, device='cuda:0'):
         super().__init__()
         self.item_embed = nn.Embedding(n_items, embed_size)
         if shared_embed:
@@ -12,7 +12,7 @@ class SasRec(nn.Module):
         else:
             self.item_embed_prediction = nn.Embedding(n_items, embed_size)# nn.Parameter(torch.normal(0, 1, (n_items, embed_size)))
         self.pos_embed = nn.Parameter(torch.normal(0, 1, (max_len, embed_size)))
-        self.subsequent_mask = torch.triu(torch.ones((max_len, max_len))) == 0
+        self.subsequent_mask = (torch.triu(torch.ones((max_len, max_len))) == 0).to(device)
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=embed_size, nhead=1, dim_feedforward=embed_size,
                                                         dropout=dropout)
         self.encoder = nn.TransformerEncoder(encoder_layer=self.encoder_layer, num_layers=b)

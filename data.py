@@ -69,7 +69,10 @@ class SequentialDataset(Dataset):
         source, target = sentence[:-1], sentence[1:]
         pad_mask = source == 0
         neg_samples = self.make_neg_samples(user)
-        return source, target, pad_mask, neg_samples
+        return source, target, pad_mask, neg_samples, user
+    
+    def get_val(self):
+      return self.valid_data
 
 
 class CaserDataset(SequentialDataset):
