@@ -1,4 +1,5 @@
 import yaml
+import time
 
 import torch
 from torch.utils.data import DataLoader
@@ -35,6 +36,7 @@ if __name__ == "__main__":
     optim = torch.optim.Adam(model.parameters(), lr=0.001)
     for epoch in range(params['n_epochs']):
         mean_loss = []
+        start = time.time()
         for i, batch in enumerate(dataloader):
             optim.zero_grad()
             source, target, pad_mask, neg_samples = batch
@@ -44,8 +46,23 @@ if __name__ == "__main__":
             neg_logits = torch.sum(logits[:, :, None, :] * neg_embed, dim=(2, 3))
             loss = torch.sum(-torch.log(torch.sigmoid(pos_logits) + 1e-24) * ignore - torch.log(1 - torch.sigmoid(neg_logits) + 1e-24) * ignore) / ignore.sum() * dataset_params['batch_size']
             mean_loss.append(loss.item())
-            if i % 100 == 0:
+            if len(mean_loss) >= params['verbose_every'] * len(dataloader):
+                print("time took", time.time() - start)
                 print(np.mean(mean_loss))
                 mean_loss = []
+                hit10 = 0
+                start = time.time()
+                for val_user, val_batch in enumerate(dataset):
+                    print(val_user, val_user not in dataset.valid_data)
+                    if val_user not in dataset.valid_data:
+                        continue
+                    _, val_target, val_pad_mask, _ = val_batch
+                    logits, _, _ = model(torch.tensor(val_target[None]), None, None, torch.tensor(val_pad_mask[None]))
+                    predictions = torch.matmul(model.item_embed.weight, logits[0, -1])
+                    _, top10 = torch.topk(predictions, 10)
+                    hit10 += dataset.valid_data[val_user] in top10
+                print("time took", time.time() - start)
+                print("hit@10", hit10 / len(dataset))
+                break
             loss.backward()
             optim.step()

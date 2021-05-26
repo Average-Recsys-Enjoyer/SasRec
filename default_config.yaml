@@ -11,3 +11,4 @@ dataset:
   batch_size: 4
 
 n_epochs: 200
+verbose_every: 0.01

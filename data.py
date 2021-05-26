@@ -59,6 +59,9 @@ class SequentialDataset(Dataset):
         neg_samples = list(self.all_items - set(self.train_data[user]))
         return np.random.choice(neg_samples, (self.max_len, self.n_neg_samples))
 
+    def check(self):
+        pass
+
     def __len__(self):
         return len(self.train_data)
 
