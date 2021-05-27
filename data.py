@@ -1,4 +1,6 @@
 from collections import defaultdict
+
+import torch
 import yaml
 
 import numpy as np
@@ -51,9 +53,9 @@ class SequentialDataset(Dataset):
         self.valid_data = valid_data
         self.test_data = test_data
 
-    def make_neg_samples(self, user):
+    def make_neg_samples(self, user, target_shape):
         neg_samples = list(self.all_items - set(self.train_data[user]))
-        return np.random.choice(neg_samples, (self.max_len, self.n_neg_samples))
+        return np.random.choice(neg_samples, (target_shape, self.n_neg_samples))
 
     def add_pad_and_cut(self, train_data):
         for user, items in train_data.items():
@@ -68,7 +70,7 @@ class SequentialDataset(Dataset):
         sentence = self.train_data[user]
         source, target = sentence[:-1], sentence[1:]
         pad_mask = source == 0
-        neg_samples = self.make_neg_samples(user)
+        neg_samples = self.make_neg_samples(user, self.max_len)
         return source, target, pad_mask, neg_samples
 
 
@@ -81,12 +83,21 @@ class CaserDataset(SequentialDataset):
             items = items[-self.max_len - 1:]
             train_data[user] = items
 
-    def __getitem__(self, user):
-        sentence = self.train_data[user]
+    def __len__(self):
+        return len(self.train_data)
+
+    def __getitem__(self, now_user):
+        sentence = self.train_data[now_user]
         source = []
         target = []
         for idx, i in enumerate(sentence[1:]):
-            source.append(sentence[:idx+1])
+            items = sentence[:idx+1]
+            n_pad = self.max_len - len(items)
+            items = np.pad(items, (n_pad, 0))
+            source.append(items)
             target.append(i)
-        neg_samples = self.make_neg_samples(user)
-        return source, target, neg_samples
+        source = torch.tensor(source)
+        target = torch.tensor(target).unsqueeze(1)
+        neg_samples = self.make_neg_samples(now_user, target.shape[0])
+        neg_samples = torch.tensor(neg_samples)
+        return source, torch.tensor([now_user]).unsqueeze(0).repeat(target.shape[0], 1), target, neg_samples

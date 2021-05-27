@@ -11,10 +11,10 @@ model_caser:
   num_blocks: 2
 
 dataset:
-  path: '/home/andreybocharnikov/programing/Recommendation-systems/SasRec/data/Beauty.txt'
+  path: 'data/Beauty.txt'
   max_len: 50
   n_neg_samples: 1
-  batch_size: 4
+  batch_size: 16
 
 n_epochs: 200
 verbose_every: 0.01

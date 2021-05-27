@@ -40,31 +40,25 @@ user_embed at last layer
 в dataset'е нужно падить/обрезать до n + 1, передавать маску в которой True на месте падинга 
 """
 
-activation_getter = {'iden': lambda x: x, 'relu': F.relu, 'tanh': torch.tanh, 'sigm': torch.sigmoid}
 
 class Caser(nn.Module):
-    def __init__(self, num_users, num_items, model_args):
+    def __init__(self, num_users, num_items, max_len, dims=50, drop_ratio=0.5, nh=16, nv=4):
         super(Caser, self).__init__()
-        self.args = model_args
-
-        # init args
-        L = self.args.L
-        dims = self.args.d
-        self.n_h = self.args.nh
-        self.n_v = self.args.nv
-        self.drop_ratio = self.args.drop
-        self.ac_conv = activation_getter[self.args.ac_conv]
-        self.ac_fc = activation_getter[self.args.ac_fc]
+        self.n_h = nh
+        self.n_v = nv
+        self.drop_ratio = drop_ratio
+        self.ac_conv = F.relu
+        self.ac_fc = F.relu
 
         # user and item embeddings
         self.user_embeddings = nn.Embedding(num_users, dims)
         self.item_embeddings = nn.Embedding(num_items, dims)
 
         # vertical conv layer
-        self.conv_v = nn.Conv2d(1, self.n_v, (L, 1))
+        self.conv_v = nn.Conv2d(1, self.n_v, (max_len, 1))
 
         # horizontal conv layer
-        lengths = [i + 1 for i in range(L)]
+        lengths = [i + 1 for i in range(max_len)]
         self.conv_h = nn.ModuleList([nn.Conv2d(1, self.n_h, (i, dims)) for i in lengths])
 
         # fully-connected layer
@@ -92,14 +86,12 @@ class Caser(nn.Module):
         # Embedding Look-up
         item_embs = self.item_embeddings(seq_var).unsqueeze(1)  # use unsqueeze() to get 4-D
         user_emb = self.user_embeddings(user_var).squeeze(1)
-
         # Convolutional Layers
         out, out_h, out_v = None, None, None
         # vertical conv layer
         if self.n_v:
             out_v = self.conv_v(item_embs)
             out_v = out_v.view(-1, self.fc1_dim_v)  # prepare for fully connect
-
         # horizontal conv layer
         out_hs = list()
         if self.n_h:
