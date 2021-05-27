@@ -105,3 +105,22 @@ class CaserDataset(SequentialDataset):
         neg_samples = self.make_neg_samples(now_user, target.shape[0])
         neg_samples = torch.tensor(neg_samples)
         return source, torch.tensor([now_user]).unsqueeze(0).repeat(target.shape[0], 1), target, neg_samples
+
+
+class CaserValDataset(Dataset):
+    def __init__(self, train_dataset, negatives=100):
+        self.dataset = train_dataset
+        self.neg = negatives
+
+    def __len__(self):
+        return len(self.dataset.train_data)
+
+    def __getitem__(self, now_user):
+        if now_user not in self.dataset.valid_data:
+            return None, None, None, None
+        sentence = torch.tensor(self.dataset.train_data[now_user])
+        neg_samples = self.dataset.make_neg_samples(now_user, self.neg)
+        neg_samples = torch.tensor(neg_samples)
+        target = torch.tensor([self.dataset.valid_data[now_user]])
+        print(sentence.shape, target.shape, neg_samples.squeeze(1).shape)
+        return sentence, torch.tensor([now_user]), target, neg_samples.squeeze(1)
