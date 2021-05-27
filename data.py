@@ -84,7 +84,7 @@ class SequentialDataset(Dataset):
 
 class CaserDataset(SequentialDataset):
     def __init__(self, path, max_len, n_neg_samples):
-        super().__init__(path, max_len, n_neg_samples)
+        super().__init__(path, max_len, n_neg_samples, None)
 
     def add_pad_and_cut(self, train_data):
         for user, items in train_data.items():
@@ -122,9 +122,14 @@ class CaserValDataset(Dataset):
     def __getitem__(self, now_user):
         if now_user not in self.dataset.valid_data:
             return None, None, None, None
-        sentence = torch.tensor(self.dataset.train_data[now_user])
+        items = self.dataset.train_data[now_user][-self.dataset.max_len:]
+        n_pad = self.dataset.max_len - len(items)
+        items = np.pad(items, (n_pad, 0))
+        sentence = torch.tensor(items)
+
         neg_samples = self.dataset.make_neg_samples(now_user, self.neg)
+
         neg_samples = torch.tensor(neg_samples)
+
         target = torch.tensor([self.dataset.valid_data[now_user]])
-        print(sentence.shape, target.shape, neg_samples.squeeze(1).shape)
         return sentence, torch.tensor([now_user]), target, neg_samples.squeeze(1)

@@ -26,9 +26,10 @@ if __name__ == "__main__":
     model = Caser(len(dataset), dataset.n_items, dataset_params['max_len'])
     model.to(device)
     optim = torch.optim.Adam(model.parameters(), amsgrad=True)
+    metric_cnt = 0
     for epoch in range(params['n_epochs']):
         mean_loss = []
-        metric_cnt = 0
+        model.train()
         for idx, i in enumerate(dataloader):
             optim.zero_grad()
             source, user, target, neg_samples = i
@@ -41,23 +42,30 @@ if __name__ == "__main__":
             mean_loss.append(loss.item())
             loss.backward()
             optim.step()
-            metric_cnt += 1
             if len(mean_loss) >= params['verbose_loss_every'] * len(dataloader) or i == len(dataloader) - 1:
                 print(f"epoch {epoch}, loss {np.mean(mean_loss)}")
                 mean_loss = []
-            if metric_cnt >= params['verbose_metrics_every'] * len(dataloader) or i == 0 or i == len(dataloader) - 1:
-                hit10 = 0
-                ndcg10 = 0
-            #     model.eval()
-            #     for idx2 in range(len(val_dataset)):
-            #         source, user, target, neg_samples = val_dataset[idx2]
-            #         if source is None:
-            #             continue
-            #         items_to_predict = torch.cat((target, neg_samples), 1)
-            #         items_prediction = model()
-            #         (targets_prediction, negatives_prediction) = torch.split(items_prediction,
-            #                                                                  [1, items_prediction.size(1) - 1],
-            #                                                                  dim=1)
-                metric_cnt = 0
-                print(f"epoch {epoch}, hit@10 {hit10}, ndcg@10 {ndcg10}")
+        metric_cnt += 1
+        if metric_cnt >= params['verbose_metrics_every'] * params['n_epochs'] or metric_cnt == params['n_epochs'] or metric_cnt == 1:
+            hit10 = 0
+            ndcg10 = 0
+            model.eval()
+            print(len(val_dataset.dataset.valid_data))
+            for idx2 in range(len(val_dataset)):
+                source, user, target, neg_samples = val_dataset[idx2]
+                if source is None:
+                        continue
+                items_to_predict = torch.cat((target, neg_samples), 0)
+                items_prediction = model(source.unsqueeze(0).to(device), user.unsqueeze(0).to(device),
+                                             items_to_predict.unsqueeze(0).to(device), for_pred=True)
+                rank = torch.argsort(torch.argsort(items_prediction))[0]
+                if rank < 10:
+                    hit10 += 1
+                    ndcg10 += 1 / np.log2(rank.cpu() + 2)
+                if idx2 % 10000 == 0:
+                    print(f"now: {idx2}, all: {len(val_dataset)}")
+            metric_cnt = 0
+            sz = len(val_dataset.dataset.valid_data)
+            print(f"epoch {epoch}, hit@10 {hit10 / sz}, ndcg@10 {ndcg10 / sz}")
+            model.train()
         print(sum(mean_loss) / len(mean_loss))
