@@ -8,8 +8,9 @@ from torch.utils.data import Dataset
 
 
 class SequentialDataset(Dataset):
-    def __init__(self, path, max_len, n_neg_samples):
+    def __init__(self, path, max_len, n_neg_samples, split):
         self.max_len = max_len
+        self.split = split
         self.n_neg_samples = n_neg_samples
         user_actions = self.read_data(path)
         self.preprocess_data(user_actions)
@@ -71,7 +72,10 @@ class SequentialDataset(Dataset):
         source, target = sentence[:-1], sentence[1:]
         source_pad_mask = source == 0
         target_pad_mask = target == 0
-        neg_samples = self.make_neg_samples(user, self.max_len)
+        if self.split == 'train':
+          neg_samples = self.make_neg_samples(user, self.max_len)
+        else:
+          neg_samples = self.make_neg_samples(user, 100)
         return source, target, source_pad_mask, target_pad_mask, neg_samples, user
     
     def get_val(self):
