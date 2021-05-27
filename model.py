@@ -21,8 +21,6 @@ class SasRec(nn.Module):
         # s - input sequence of length n, each s_i \in [0, n_items)
         e = self.item_embed(sequence) + self.pos_embed # shape - batch_size, max_len, embed_size
         e = e.permute(1, 0, 2)
-        #print(e.shape)
-        #print(padding_mask.shape)
         logits = self.encoder_layer(e, self.subsequent_mask, padding_mask) # max_len, batch_size, embed_size
         pos_embed, neg_embed = None, None
         if positive is not None:
@@ -30,17 +28,6 @@ class SasRec(nn.Module):
         if negative is not None:
             neg_embed = self.item_embed(negative)
         return logits.permute(1, 0, 2), pos_embed, neg_embed
-        #return pos_embed * logits torch.matmul(attn_output, self.item_embed_prediction.weight.T).permute(1, 2, 0) # batch_size, n_item, max_len
-
-
-"""
-TODO:
-different n: 10, 50, 100, 200, 300, 400, 500, 600
-user_embed at last layer
-
-в dataset'е нужно падить/обрезать до n + 1, передавать маску в которой True на месте падинга 
-"""
-
 
 class Caser(nn.Module):
     def __init__(self, num_users, num_items, max_len, dims=50, drop_ratio=0.5, nh=16, nv=4):

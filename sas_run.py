@@ -48,7 +48,10 @@ if __name__ == "__main__":
                     _, val_source, _, pad_mask, neg_samples, user_batch = val_batch
                     target_items = []
                     for j, user in enumerate(user_batch):
-                        target_items.append(user.item())
+                        if user in val_target:
+                          target_items.append(val_target[user.item()])
+                        else:
+                          target_items.append(0)
                     target_items = torch.Tensor(target_items).long()
                     neg_samples = torch.cat((target_items[:, None], neg_samples[:, :, -1]), 1)
                     logits, _, neg_predictions = model(val_source.cuda(), None, neg_samples.cuda(), pad_mask.cuda())
