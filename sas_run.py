@@ -23,10 +23,14 @@ if __name__ == "__main__":
                    shared_embed=model_params['shared_embed'], dropout=model_params['dropout'], b=model_params['num_blocks'])
     model.cuda()
     optim = torch.optim.Adam(model.parameters(), lr=0.001)
+    if params['from_pretrain'] is not None:
+        checkpoint = torch.load(params['from_pretrain'] )
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optim.load_state_dict(checkpoint['optimizer_state_dict'])
+
     for epoch in range(params['n_epochs']):
         mean_loss = []
         metric_cnt = 0
-        start = time.time()
         for i, batch in enumerate(dataloader):
             optim.zero_grad()
             source, target, pad_mask, _, neg_samples, user_batch = batch
@@ -67,3 +71,7 @@ if __name__ == "__main__":
                 print(f"epoch {epoch}, batch {i}, hit@10 {hit10 / len(val_target)}, ndcg {ndcg / len(val_target)}")
             loss.backward()
             optim.step()
+        torch.save({
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optim.state_dict(),
+        }, './state_dict.pt')
