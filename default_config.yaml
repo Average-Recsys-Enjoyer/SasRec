@@ -17,4 +17,5 @@ dataset:
   batch_size: 16
 
 n_epochs: 200
-verbose_every: 0.01
+verbose_loss_every: 0.1
+verbose_metrics_every: 0.5
