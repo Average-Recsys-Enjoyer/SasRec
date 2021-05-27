@@ -50,22 +50,21 @@ if __name__ == "__main__":
             hit10 = 0
             ndcg10 = 0
             model.eval()
-            print(len(val_dataset.dataset.valid_data))
             for idx2 in range(len(val_dataset)):
                 source, user, target, neg_samples = val_dataset[idx2]
                 if source is None:
-                        continue
+                    continue
                 items_to_predict = torch.cat((target, neg_samples), 0)
                 items_prediction = model(source.unsqueeze(0).to(device), user.unsqueeze(0).to(device),
-                                             items_to_predict.unsqueeze(0).to(device), for_pred=True)
+                                                 items_to_predict.unsqueeze(0).to(device), for_pred=True)
                 rank = torch.argsort(torch.argsort(items_prediction))[0]
-                if rank < 10:
+                if rank >= 90:
                     hit10 += 1
-                    ndcg10 += 1 / np.log2(rank.cpu() + 2)
+                    ndcg10 += 1 / np.log2(99 - rank.cpu() + 2)
                 if idx2 % 10000 == 0:
                     print(f"now: {idx2}, all: {len(val_dataset)}")
+            model.train()
             metric_cnt = 0
             sz = len(val_dataset.dataset.valid_data)
             print(f"epoch {epoch}, hit@10 {hit10 / sz}, ndcg@10 {ndcg10 / sz}")
-            model.train()
         print(sum(mean_loss) / len(mean_loss))
