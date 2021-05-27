@@ -58,7 +58,7 @@ if __name__ == "__main__":
                 items_prediction = model(source.unsqueeze(0).to(device), user.unsqueeze(0).to(device),
                                                  items_to_predict.unsqueeze(0).to(device), for_pred=True)
                 rank = torch.argsort(torch.argsort(items_prediction))[0]
-                if rank >= 90:
+                if rank > 90:
                     hit10 += 1
                     ndcg10 += 1 / np.log2(100 - rank.cpu() + 2)
                 if idx2 % 10000 == 0:
