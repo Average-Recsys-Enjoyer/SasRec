@@ -25,8 +25,9 @@ class SasRec(nn.Module):
         #print(padding_mask.shape)
         logits = self.encoder_layer(e, self.subsequent_mask, padding_mask) # max_len, batch_size, embed_size
         pos_embed, neg_embed = None, None
-        if positive is not None and negative is not None:
+        if positive is not None:
             pos_embed = self.item_embed(positive)
+        if negative is not None:
             neg_embed = self.item_embed(negative)
         return logits.permute(1, 0, 2), pos_embed, neg_embed
         #return pos_embed * logits torch.matmul(attn_output, self.item_embed_prediction.weight.T).permute(1, 2, 0) # batch_size, n_item, max_len

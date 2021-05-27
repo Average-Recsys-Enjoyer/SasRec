@@ -41,7 +41,6 @@ if __name__ == "__main__":
         mean_loss = []
         metric_cnt = 0
         start = time.time()
-        hit10 = 0
         for i, batch in enumerate(dataloader):
             optim.zero_grad()
             source, target, pad_mask, _, neg_samples, user_batch = batch
@@ -52,25 +51,24 @@ if __name__ == "__main__":
             neg_logits = torch.sum(logits[:, :, None, :] * neg_embed, dim=(2, 3))
             loss = torch.sum(-torch.log(torch.sigmoid(pos_logits) + 1e-24) * ignore - torch.log(1 - torch.sigmoid(neg_logits) + 1e-24) * ignore) / (ignore.sum() * dataset_params['batch_size'])
             mean_loss.append(loss.item())
-
-            predictions = torch.matmul(model.item_embed.weight, logits[:, -1].T)
-            _, top10 = torch.topk(predictions, 10, dim=0)
-            for j, user in enumerate(user_batch):
-              if user.item() not in val_target:
-                continue
-              hit10 += val_target[user.item()] in top10[:, j]
-            
             metric_cnt += 1
             if len(mean_loss) >= params['verbose_loss_every'] * len(dataloader) or i == len(dataloader) - 1:
                 print(f"epoch {epoch}, batch {i}, loss {np.mean(mean_loss)}")
-                print("hit@10", hit10 / ((i + 1) * dataset_params['batch_size']))
                 mean_loss = []
             if metric_cnt >= params['verbose_metrics_every'] * len(dataloader) or i == 0 or i == len(dataloader) - 1:
                 hit10 = 0
                 for val_batch in val_dataloader:
-                    _, val_source, _, pad_mask, _, user_batch = val_batch
-                    logits, _, _ = model(val_source.cuda(), None, None, pad_mask.cuda())
-                    predictions = torch.matmul(model.item_embed.weight, logits[:, -1].T)
+                    _, val_source, _, pad_mask, neg_samples, user_batch = val_batch
+                    target_items = []
+                    for j, user in enumerate(user_batch):
+                        target_items.append(user.item())
+                    target_items = torch.Tensor(target_items)
+                    neg_samples = torch.cat((target_items[:, None], neg_samples[:, :, -1]), 1)
+                    logits, _, neg_predictions = model(val_source.cuda(), None, neg_samples, pad_mask.cuda())
+                    print("neg pred shape", neg_predictions.shape)
+                    print("last log shape", logits[:, -1].T.shape)
+                    predictions = torch.bmm(neg_predictions, logits[:, -1].T)
+                    print("pred shape", predictions.shape)
                     _, top10 = torch.topk(predictions, 10, dim=0)
                     for j, user in enumerate(user_batch):
                       if user.item() not in val_target:
