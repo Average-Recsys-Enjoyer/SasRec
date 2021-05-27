@@ -60,7 +60,7 @@ if __name__ == "__main__":
                 rank = torch.argsort(torch.argsort(items_prediction))[0]
                 if rank >= 90:
                     hit10 += 1
-                    ndcg10 += 1 / np.log2(99 - rank.cpu() + 2)
+                    ndcg10 += 1 / np.log2(100 - rank.cpu() + 2)
                 if idx2 % 10000 == 0:
                     print(f"now: {idx2}, all: {len(val_dataset)}")
             model.train()
