@@ -46,7 +46,7 @@ if __name__ == "__main__":
                 print(f"epoch {epoch}, loss {np.mean(mean_loss)}")
                 mean_loss = []
         metric_cnt += 1
-        if metric_cnt >= params['verbose_metrics_every'] * params['n_epochs'] or metric_cnt == params['n_epochs'] or metric_cnt == 1:
+        if metric_cnt >= params['verbose_metrics_every'] * params['n_epochs'] or metric_cnt == params['n_epochs'] or epoch + 1 == params['n_epochs']:
             hit10 = 0
             ndcg10 = 0
             model.eval()
